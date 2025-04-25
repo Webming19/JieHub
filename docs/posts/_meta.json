@@ -1,0 +1,14 @@
+[
+  {
+    "type": "file",
+    "name": "index",
+    "label": "杰哥精彩文章"
+  },
+  {
+    "type": "dir",
+    "name": "黑神话篇",
+    "label": "黑神话篇",
+    "collapsible": true,
+    "collapsed": true
+  }
+]

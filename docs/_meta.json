@@ -1,0 +1,12 @@
+[
+  {
+    "text": "精彩文章",
+    "link": "/posts/",
+    "activeMatch": "/posts/"
+  },
+  {
+    "text": "推荐图书",
+    "link": "/books/",
+    "activeMatch": "/books/"
+  }
+]
