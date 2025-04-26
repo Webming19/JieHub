@@ -5,9 +5,8 @@
     "label": "杰哥精彩文章"
   },
   {
-    "type": "dir",
-    "name": "黑神话篇",
-    "label": "黑神话篇",
-    "collapsed": true
+    "type": "file",
+    "name": "黑神话悟空剧情解析",
+    "label": "黑神话剧情解析"
   }
 ]
