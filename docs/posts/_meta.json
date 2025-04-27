@@ -13,5 +13,11 @@
     "type": "file",
     "name": "三要三不要",
     "label": "三要三不要"
+  },
+  {
+    "type": "dir",
+    "name": "meta_cognition",
+    "label": "元认知",
+    "collapsed": true
   }
 ]

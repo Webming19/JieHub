@@ -4,7 +4,7 @@ pageType: home
 hero:
   name: 杰哥资料站
   text: 文章|资料|书籍|录音
-  tagline: Slogan：聊点社会学 聊点心理学
+  tagline: 聊点社会学 聊点心理学
   actions:
     - theme: brand
       text: 精彩文章 📖
