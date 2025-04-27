@@ -19,5 +19,11 @@
     "name": "meta_cognition",
     "label": "元认知",
     "collapsed": true
+  },
+  {
+    "type": "dir",
+    "name": "粉丝反馈",
+    "label": "粉丝反馈",
+    "collapsed": true
   }
 ]
