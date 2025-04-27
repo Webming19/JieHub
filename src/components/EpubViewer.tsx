@@ -1,6 +1,7 @@
 // 图书组件
 import React, { useEffect, useRef, useState } from 'react';// src/components/EpubViewer.tsx
 import Epub, { Book, Rendition } from 'epubjs';
+import { log } from 'console';
 
 export default function EpubViewer({ url }: { url: string }) {
   const viewerRef = useRef<HTMLDivElement>(null);
