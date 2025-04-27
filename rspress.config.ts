@@ -3,6 +3,7 @@ import { defineConfig } from 'rspress/config';
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
+  globalStyles: path.join(__dirname, 'src/styles/index.css'),
   title: '杰哥资料站',
   description: '杰哥分享的文章、录音、聊天记录等',
   icon: '/jiege-logo.webp',
