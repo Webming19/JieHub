@@ -159,6 +159,22 @@ export default function EpubViewer({ url }: { url: string }) {
     touchEndX.current = 0;
   }, []);
 
+  // 处理遮罩层点击事件
+  const handleOverlayClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    const rect = target.getBoundingClientRect();
+    const clickX = event.clientX - rect.left; // 点击位置相对于元素左侧的 X 坐标
+    const width = target.offsetWidth;
+
+    if (clickX < width * 0.3) {
+      // 点击左侧 30%
+      renditionRef.current?.prev();
+    } else if (clickX > width * 0.7) {
+      // 点击右侧 30%
+      renditionRef.current?.next();
+    }
+  }, []);
+
   // 处理章节切换的函数
   const handleChapterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const href = event.target.value;
@@ -230,6 +246,7 @@ export default function EpubViewer({ url }: { url: string }) {
           onTouchStart={handleTouchStart as unknown as React.TouchEventHandler<HTMLDivElement>}
           onTouchMove={handleTouchMove as unknown as React.TouchEventHandler<HTMLDivElement>}
           onTouchEnd={handleTouchEnd as unknown as React.TouchEventHandler<HTMLDivElement>}
+          onClick={handleOverlayClick} // 添加 onClick 事件处理器
         />
       </div>
 
