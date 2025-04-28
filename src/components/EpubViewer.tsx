@@ -12,11 +12,12 @@ export default function EpubViewer({ url }: { url: string }) {
   const [toc, setToc] = useState<NavItem[]>([]);
   const [currentChapterHref, setCurrentChapterHref] = useState<string | null>(null);
 
+  const epubHeight = '600px'; // 图书高度
+
   // 用于触摸滑动状态
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
   const swipeThreshold = 50; // 定义最小滑动距离阈值
-  const iframeDocRef = useRef<Document | null>(null); // Ref 存储 iframe document
 
   // 初始化 EPUB
   useEffect(() => {
@@ -24,12 +25,11 @@ export default function EpubViewer({ url }: { url: string }) {
 
     let newBook: Book | null = null;
     let newRendition: Rendition | null = null;
-    // 使用 Ref 来存储 iframe document 的引用，移除局部变量声明
 
     newBook = Epub(url);
     newRendition = newBook.renderTo(viewerRef.current, {
       width: '100%',
-      height: '580px',
+      height: epubHeight,
       spread: 'none',
     });
 
@@ -48,16 +48,8 @@ export default function EpubViewer({ url }: { url: string }) {
     newRendition.display().then(() => {
       // 初始化位置
       if (newRendition) {
-        updateLocation(newRendition, newBook); // 传递 rendition 和 book
-
-        // 获取 iframe 并添加初始事件监听器
-        const iframe = viewerRef.current?.querySelector('iframe');
-        if (iframe && iframe.contentDocument) {
-          iframeDocRef.current = iframe.contentDocument;
-          iframeDocRef.current.addEventListener('touchstart', handleTouchStart);
-          iframeDocRef.current.addEventListener('touchmove', handleTouchMove);
-          iframeDocRef.current.addEventListener('touchend', handleTouchEnd);
-        }
+        // 传递 rendition 和 book
+        updateLocation(newRendition, newBook);
       }
     });
 
@@ -85,28 +77,6 @@ export default function EpubViewer({ url }: { url: string }) {
             console.error("Error getting spine item for chapter update:", error);
           }
         }
-
-        // --- 重新绑定触摸事件 ---
-        // 延迟执行以确保 iframe 渲染完成
-        setTimeout(() => {
-          const currentIframe = viewerRef.current?.querySelector('iframe');
-          if (currentIframe && currentIframe.contentDocument) {
-            // 移除旧监听器 (如果存在)
-            if (iframeDocRef.current) {
-              iframeDocRef.current.removeEventListener('touchstart', handleTouchStart);
-              iframeDocRef.current.removeEventListener('touchmove', handleTouchMove);
-              iframeDocRef.current.removeEventListener('touchend', handleTouchEnd);
-            }
-            // 更新 ref 并添加新监听器
-            iframeDocRef.current = currentIframe.contentDocument;
-            iframeDocRef.current.addEventListener('touchstart', handleTouchStart);
-            iframeDocRef.current.addEventListener('touchmove', handleTouchMove);
-            iframeDocRef.current.addEventListener('touchend', handleTouchEnd);
-          } else {
-            console.warn("Could not find iframe document after relocation.");
-          }
-        }, 100); // 短暂延迟确保 DOM 更新
-        // --- 重新绑定触摸事件结束 ---
       }
     });
 
@@ -148,13 +118,6 @@ export default function EpubViewer({ url }: { url: string }) {
     // 清理函数
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
-      // 移除 iframe 上的事件监听器 (使用 ref)
-      if (iframeDocRef.current) {
-        iframeDocRef.current.removeEventListener('touchstart', handleTouchStart);
-        iframeDocRef.current.removeEventListener('touchmove', handleTouchMove);
-        iframeDocRef.current.removeEventListener('touchend', handleTouchEnd);
-      }
-      // 确保 newBook 存在再调用 destroy
       if (newBook) {
         newBook.destroy();
       }
@@ -238,72 +201,92 @@ export default function EpubViewer({ url }: { url: string }) {
       </div>
 
       {/* 图书组件 - 移除外部 div 的触摸事件监听器 */}
-      <div
-        ref={viewerRef}
-        className="epub-viewer"
-        style={{
-          padding: '20px',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-          touchAction: 'pan-y', // 保持 pan-y 以允许垂直滚动
-          backgroundColor: '#f9f9f9',
-          overflow: 'hidden', // 防止 viewerRef 本身滚动
-        }}
-      />
+      <div style={{ position: 'relative' }}>
+        <div
+          ref={viewerRef}
+          style={{
+            zIndex: '0',
+            padding: '20px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+            touchAction: 'pan-y', // 保持 pan-y 以允许垂直滚动
+            backgroundColor: '#f9f9f9',
+            overflow: 'hidden', // 防止 viewerRef 本身滚动
+          }}
+        />
+        {/* 操作遮罩层 - 添加触摸事件 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            zIndex: '10',
+            width: '100%',
+            height: epubHeight,
+            backgroundColor: 'rgba(249, 249, 249, 0)', // 透明背景
+            cursor: 'pointer', // 添加手型光标提示可交互
+          }}
+          onTouchStart={handleTouchStart as unknown as React.TouchEventHandler<HTMLDivElement>}
+          onTouchMove={handleTouchMove as unknown as React.TouchEventHandler<HTMLDivElement>}
+          onTouchEnd={handleTouchEnd as unknown as React.TouchEventHandler<HTMLDivElement>}
+        />
+      </div>
 
       {/* 控制栏 */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        margin: '15px 0',
-        gap: '10px'
-      }}>
-        <button
-          onClick={() => renditionRef.current?.prev()}
-          disabled={!currentCfi}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: !currentCfi ? '#ccc' : '#0070f3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: !currentCfi ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s',
-            fontWeight: '500',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-          }}
-        >
-          上一页
-        </button>
-
-        <span style={{
-          fontSize: '14px',
-          color: '#666',
-          flex: '1',
-          textAlign: 'center'
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          margin: '15px 0',
+          gap: '10px'
         }}>
-          {currentLocation ? `第 ${currentLocation} 页` : '加载中...'}
-        </span>
+          <button
+            onClick={() => renditionRef.current?.prev()}
+            disabled={!currentCfi}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: !currentCfi ? '#ccc' : '#0070f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: !currentCfi ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s',
+              fontWeight: '500',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            上一页
+          </button>
 
-        <button
-          onClick={() => renditionRef.current?.next()}
-          disabled={!currentCfi}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: !currentCfi ? '#ccc' : '#0070f3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: !currentCfi ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s',
-            fontWeight: '500',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-          }}
-        >
-          下一页
-        </button>
+          <span style={{
+            fontSize: '14px',
+            color: '#666',
+            flex: '1',
+            textAlign: 'center'
+          }}>
+            {currentLocation ? `第 ${currentLocation} 页` : '加载中...'}
+          </span>
+
+          <button
+            onClick={() => renditionRef.current?.next()}
+            disabled={!currentCfi}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: !currentCfi ? '#ccc' : '#0070f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: !currentCfi ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s',
+              fontWeight: '500',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            下一页
+          </button>
+        </div>
       </div>
     </div>
   );
