@@ -8,7 +8,9 @@
     "preview": "rspress preview"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.3.0",
     "epubjs": "^0.3.93",
+    "react-pdf": "^9.2.1",
     "rspress": "^1.40.2"
   },
   "devDependencies": {

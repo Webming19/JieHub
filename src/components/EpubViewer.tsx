@@ -1,27 +1,35 @@
 // 图书组件
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Epub, { Book, Rendition, NavItem, Location } from 'epubjs'; // 导入 Location 类型
 
 export default function EpubViewer({ url }: { url: string }) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const [book, setBook] = useState<Book | null>(null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
+  const renditionRef = useRef<Rendition | null>(null); // 使用 ref 存储 rendition
   const [currentLocation, setCurrentLocation] = useState('');
   const [currentCfi, setCurrentCfi] = useState('');
   const [toc, setToc] = useState<NavItem[]>([]);
-  const [currentChapterHref, setCurrentChapterHref] = useState<string | null>(null); // 新增状态存储当前章节 href
+  const [currentChapterHref, setCurrentChapterHref] = useState<string | null>(null);
+
+  // 用于触摸滑动状态
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const swipeThreshold = 50; // 定义最小滑动距离阈值
+  const iframeDocRef = useRef<Document | null>(null); // Ref 存储 iframe document
 
   // 初始化 EPUB
   useEffect(() => {
     if (!viewerRef.current) return;
 
-    let newBook: Book | null = null; // 声明为 let 以便在 cleanup 中访问
-    let newRendition: Rendition | null = null; // 声明为 let
+    let newBook: Book | null = null;
+    let newRendition: Rendition | null = null;
+    // 使用 Ref 来存储 iframe document 的引用，移除局部变量声明
 
     newBook = Epub(url);
     newRendition = newBook.renderTo(viewerRef.current, {
       width: '100%',
-      height: '600px',
+      height: '580px',
       spread: 'none',
     });
 
@@ -36,10 +44,20 @@ export default function EpubViewer({ url }: { url: string }) {
       }
     });
 
+    // 显示图书
     newRendition.display().then(() => {
       // 初始化位置
       if (newRendition) {
         updateLocation(newRendition, newBook); // 传递 rendition 和 book
+
+        // 获取 iframe 并添加初始事件监听器
+        const iframe = viewerRef.current?.querySelector('iframe');
+        if (iframe && iframe.contentDocument) {
+          iframeDocRef.current = iframe.contentDocument;
+          iframeDocRef.current.addEventListener('touchstart', handleTouchStart);
+          iframeDocRef.current.addEventListener('touchmove', handleTouchMove);
+          iframeDocRef.current.addEventListener('touchend', handleTouchEnd);
+        }
       }
     });
 
@@ -67,18 +85,36 @@ export default function EpubViewer({ url }: { url: string }) {
             console.error("Error getting spine item for chapter update:", error);
           }
         }
+
+        // --- 重新绑定触摸事件 ---
+        // 延迟执行以确保 iframe 渲染完成
+        setTimeout(() => {
+          const currentIframe = viewerRef.current?.querySelector('iframe');
+          if (currentIframe && currentIframe.contentDocument) {
+            // 移除旧监听器 (如果存在)
+            if (iframeDocRef.current) {
+              iframeDocRef.current.removeEventListener('touchstart', handleTouchStart);
+              iframeDocRef.current.removeEventListener('touchmove', handleTouchMove);
+              iframeDocRef.current.removeEventListener('touchend', handleTouchEnd);
+            }
+            // 更新 ref 并添加新监听器
+            iframeDocRef.current = currentIframe.contentDocument;
+            iframeDocRef.current.addEventListener('touchstart', handleTouchStart);
+            iframeDocRef.current.addEventListener('touchmove', handleTouchMove);
+            iframeDocRef.current.addEventListener('touchend', handleTouchEnd);
+          } else {
+            console.warn("Could not find iframe document after relocation.");
+          }
+        }, 100); // 短暂延迟确保 DOM 更新
+        // --- 重新绑定触摸事件结束 ---
       }
     });
 
-
     setBook(newBook);
     setRendition(newRendition);
+    renditionRef.current = newRendition; // 将 rendition 实例存入 ref
 
-    // 键盘翻页事件
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') prevPage();
-      if (e.key === 'ArrowRight') nextPage();
-    };
+    // 使用 memoized 的键盘事件处理函数
     window.addEventListener('keydown', handleKeyPress);
 
     // 更新当前位置信息 - 接收 rendition 和 book 作为参数
@@ -112,6 +148,12 @@ export default function EpubViewer({ url }: { url: string }) {
     // 清理函数
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
+      // 移除 iframe 上的事件监听器 (使用 ref)
+      if (iframeDocRef.current) {
+        iframeDocRef.current.removeEventListener('touchstart', handleTouchStart);
+        iframeDocRef.current.removeEventListener('touchmove', handleTouchMove);
+        iframeDocRef.current.removeEventListener('touchend', handleTouchEnd);
+      }
       // 确保 newBook 存在再调用 destroy
       if (newBook) {
         newBook.destroy();
@@ -119,15 +161,40 @@ export default function EpubViewer({ url }: { url: string }) {
     };
   }, [url]); // 依赖项保持不变
 
-  // 翻页逻辑
-  const nextPage = () => {
-    if (!rendition) return;
-    rendition.next();
-  };
-  const prevPage = () => {
-    if (!rendition) return;
-    rendition.prev();
-  };
+  // 使用 useCallback 包装事件处理函数
+  const handleKeyPress = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      renditionRef.current?.prev();
+    }
+    if (e.key === 'ArrowRight') {
+      renditionRef.current?.next();
+    }
+  }, []);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const diffX = touchStartX.current - touchEndX.current;
+    if (Math.abs(diffX) > swipeThreshold) {
+      if (diffX > 0) {
+        // 向左滑动 -> 下一页
+        renditionRef.current?.next();
+      }
+      else {
+        // 向右滑动 -> 上一页
+        renditionRef.current?.prev();
+      }
+    }
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  }, []);
 
   // 处理章节切换的函数
   const handleChapterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -154,7 +221,6 @@ export default function EpubViewer({ url }: { url: string }) {
     return options;
   };
 
-
   return (
     <div>
       {/* 章节选择下拉框 */}
@@ -171,16 +237,18 @@ export default function EpubViewer({ url }: { url: string }) {
         </select>
       </div>
 
-      {/* 图书组件 */}
+      {/* 图书组件 - 移除外部 div 的触摸事件监听器 */}
       <div
         ref={viewerRef}
         className="epub-viewer"
         style={{
-          backgroundColor: '#f9f9f9',
           padding: '20px',
           border: '1px solid #ddd',
           borderRadius: '4px',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+          touchAction: 'pan-y', // 保持 pan-y 以允许垂直滚动
+          backgroundColor: '#f9f9f9',
+          overflow: 'hidden', // 防止 viewerRef 本身滚动
         }}
       />
 
@@ -193,7 +261,7 @@ export default function EpubViewer({ url }: { url: string }) {
         gap: '10px'
       }}>
         <button
-          onClick={prevPage}
+          onClick={() => renditionRef.current?.prev()}
           disabled={!currentCfi}
           style={{
             padding: '6px 12px',
@@ -220,7 +288,7 @@ export default function EpubViewer({ url }: { url: string }) {
         </span>
 
         <button
-          onClick={nextPage}
+          onClick={() => renditionRef.current?.next()}
           disabled={!currentCfi}
           style={{
             padding: '6px 12px',
