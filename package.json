@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.0",
+    "@wojtekmaj/react-hooks": "^1.22.0",
     "epubjs": "^0.3.93",
     "react-pdf": "^9.2.1",
     "rspress": "^1.40.2"

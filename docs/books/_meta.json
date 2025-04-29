@@ -8,5 +8,10 @@
     "type": "file",
     "name": "万历十五年",
     "label": "万历十五年"
+  },
+  {
+    "type": "file",
+    "name": "PDF示例",
+    "label": "PDF示例"
   }
 ]
