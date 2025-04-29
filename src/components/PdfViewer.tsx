@@ -1,6 +1,6 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react'; // Removed useEffect as it's not used
 import { useResizeObserver } from '@wojtekmaj/react-hooks';
 import { pdfjs, Document, Page } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
@@ -28,6 +28,7 @@ interface PdfViewerProps {
 
 export default function PdfViewer({ url }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number>();
+  const [currentPage, setCurrentPage] = useState<number>(1); // Add state for current page
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>();
 
@@ -43,21 +44,51 @@ export default function PdfViewer({ url }: PdfViewerProps) {
 
   function onDocumentLoadSuccess({ numPages: nextNumPages }: PDFDocumentProxy): void {
     setNumPages(nextNumPages);
+    setCurrentPage(1); // Reset to first page on new document load
+  }
+
+  function goToPreviousPage() {
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  }
+
+  function goToNextPage() {
+    setCurrentPage((prevPage) => Math.min(prevPage + 1, numPages || 1));
   }
 
   return (
-    <div className="Example">
-      <div className="Example__container">
-        <div className="Example__container__document" ref={setContainerRef}>
+    <div className="PdfViewer">
+      <div className="PdfViewer__container">
+        <div className="PdfViewer__container__document" ref={setContainerRef}>
           <Document file={url} onLoadSuccess={onDocumentLoadSuccess} options={options}>
-            {Array.from(new Array(numPages), (_el, index) => (
+            {numPages && (
               <Page
-                key={`page_${index + 1}`}
-                pageNumber={index + 1}
+                key={`page_${currentPage}`}
+                pageNumber={currentPage}
                 width={containerWidth ? Math.min(containerWidth, maxWidth) : maxWidth}
               />
-            ))}
+            )}
           </Document>
+        </div>
+
+        {/* 分页按钮 */}
+        <div className="Pagination__controls">
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={goToPreviousPage}
+          >
+            上一页
+          </button>
+          <span>
+            第 {currentPage} 页 / 共 {numPages || '--'} 页
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= (numPages || 1)}
+            onClick={goToNextPage}
+          >
+            下一页
+          </button>
         </div>
       </div>
     </div>

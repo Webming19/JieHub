@@ -1,51 +1,52 @@
-.Example input,
-.Example button {
-  font: inherit;
-}
-
-.Example header {
-  background-color: #323639;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-  padding: 20px;
-  color: white;
-}
-
-.Example header h1 {
-  font-size: inherit;
-  margin: 0;
-}
-
-.Example__container {
+.PdfViewer {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 10px 0;
-  padding: 10px;
+  justify-content: center;
 }
 
-.Example__container__load {
-  margin-top: 1em;
-  color: white;
-}
-
-.Example__container__document {
-  width: 100%;
-  max-width: calc(100% - 2em);
-  margin: 1em 0;
-}
-
-.Example__container__document .react-pdf__Document {
+.PdfViewer__container__document {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 80vw;
+  max-width: 800px;
+  min-height: 400px;
+  margin-bottom: 10px;
 }
 
-.Example__container__document .react-pdf__Page {
-  margin: 1em 0;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+/* Pagination Controls Styles */
+.Pagination__controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
 }
 
-.Example__container__document .react-pdf__message {
-  padding: 20px;
+.Pagination__controls button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
   color: white;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.Pagination__controls button:hover:not(:disabled) {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.Pagination__controls button:disabled {
+  background-color: #cccccc; /* Grey background when disabled */
+  cursor: not-allowed;
+}
+
+.Pagination__controls span {
+  font-size: 14px;
+  color: #333;
+  margin: 0 10px;
 }
