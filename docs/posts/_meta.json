@@ -5,9 +5,10 @@
     "label": "杰哥精彩文章"
   },
   {
-    "type": "file",
-    "name": "黑神话悟空剧情解析",
-    "label": "黑神话剧情解析"
+    "type": "dir",
+    "name": "元认知",
+    "label": "元认知",
+    "collapsed": true
   },
   {
     "type": "file",
@@ -15,10 +16,9 @@
     "label": "三要三不要"
   },
   {
-    "type": "dir",
-    "name": "元认知",
-    "label": "元认知",
-    "collapsed": true
+    "type": "file",
+    "name": "黑神话悟空剧情解析",
+    "label": "黑神话剧情解析"
   },
   {
     "type": "dir",
