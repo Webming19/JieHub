@@ -28,16 +28,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+          cache: bun
+          cache-dependency-path: bun.lockb # bun 的锁文件是 bun.lockb
 
-      - uses: pnpm/action-setup@v3
+      - uses: oven-sh/setup-bun@v1 # 使用官方的 setup-bun action
         with:
-          version: 8 # 您可以根据需要调整 pnpm 版本
+          bun-version: latest # 或者指定一个版本
 
-      - run: pnpm install
+      - run: bun install
 
-      - run: pnpm run build
+      - run: bun run build
         env:
           NODE_ENV: production  # 显式声明构建环境[6](@ref)
 
