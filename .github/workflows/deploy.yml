@@ -29,11 +29,11 @@ jobs:
         with:
           node-version: 20
           cache: bun
-          cache-dependency-path: bun.lockb
+          cache-dependency-path: bun.lock
 
-      - run: bun install
+      - run: pnpm install
 
-      - run: bun run build
+      - run: pnpm run build
         env:
           NODE_ENV: production  # 显式声明构建环境[6](@ref)
 
