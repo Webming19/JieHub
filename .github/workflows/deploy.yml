@@ -1,75 +1,56 @@
-name: Deploy Rspress site to Pages
+name: Deploy Rspress to GitHub Pages (2024 Optimized)
 
-# 触发条件：推送到 main 分支或手动触发
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # 允许在 GitHub 界面手动触发
+  workflow_dispatch:
 
-# 权限配置 (GitHub Pages 部署所需)
 permissions:
-  contents: read      # 读取仓库内容
-  pages: write       # 写入 Pages 服务
-  id-token: write    # 生成部署令牌
+  contents: read
+  pages: write
+  id-token: write
 
-# 并发控制：同一时间只运行一个部署
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true  # 避免部署冲突[2](@ref)
 
 jobs:
-  # 构建阶段
   build:
-    runs-on: ubuntu-latest  # 使用最新版 Ubuntu 镜像
-    steps:
-      # 步骤 1：检出代码
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # 获取完整提交历史（用于 lastUpdated 功能）
+    runs-on: ubuntu-latest
+    env:
+      BUILD_DIR: dist  # 环境变量统一管理路径[5](@ref)
 
-      # 步骤 2：设置 Node.js 环境
-      - name: Setup Node
-        uses: actions/setup-node@v3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: bun
+          cache-dependency-path: bun.lockb
 
-      # 步骤 3：配置缓存
-      - name: Cache bun modules
-        uses: actions/cache@v3
+      - run: bun install
+
+      - run: bun run build
+        env:
+          NODE_ENV: production  # 显式声明构建环境[6](@ref)
+
+      - name: Verify build output
+        run: ls -R ${{ env.BUILD_DIR }}  # 输出目录验证[2](@ref)
+
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: |
-            ~/.bun
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          path: ${{ env.BUILD_DIR }}
 
-      # 步骤 3：配置 Pages 服务
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      # 步骤 4：安装项目依赖
-      - name: Install dependencies
-        run: pnpm install
-
-      # 步骤 5：构建 Rspress 项目
-      - name: Build with Rspress
-        run: pnpm run build
-
-      # 步骤 6：上传构建产物
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: doc_build
-
-  # 部署阶段
   deploy:
     environment:
-      name: github-pages  # 部署环境名称
-      url: ${{ steps.deployment.outputs.page_url }}  # 部署后的访问地址
-    needs: build          # 依赖构建阶段
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
     runs-on: ubuntu-latest
+
     steps:
-      # 最终部署到 GitHub Pages
-      - name: Deploy to GitHub Pages
+      - uses: actions/deploy-pages@v2  # 最新稳定版部署 Action
         id: deployment
-        uses: actions/deploy-pages@v3
