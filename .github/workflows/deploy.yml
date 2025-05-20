@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BUILD_DIR: dist  # 环境变量统一管理路径[5](@ref)
+      BUILD_DIR: doc_build  # 环境变量统一管理路径[5](@ref)
 
     steps:
       - uses: actions/checkout@v4
