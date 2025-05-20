@@ -28,8 +28,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: bun
-          cache-dependency-path: bun.lockb # bun 的锁文件是 bun.lockb
 
       - uses: oven-sh/setup-bun@v1 # 使用官方的 setup-bun action
         with:
