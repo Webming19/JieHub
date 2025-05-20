@@ -53,8 +53,7 @@ jobs:
 
       # 步骤 5：构建 Rspress 项目
       - name: Build with Rspress
-        run: |
-          bun run build
+        run: bun run build
 
       # 步骤 6：上传构建产物
       - name: Upload artifact
