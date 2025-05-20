@@ -49,11 +49,11 @@ jobs:
 
       # 步骤 4：安装项目依赖
       - name: Install dependencies
-        run: bun install
+        run: pnpm install
 
       # 步骤 5：构建 Rspress 项目
       - name: Build with Rspress
-        run: bun run build
+        run: pnpm run build
 
       # 步骤 6：上传构建产物
       - name: Upload artifact
