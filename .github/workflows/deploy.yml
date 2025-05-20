@@ -32,8 +32,16 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 20  # 指定 Node.js 20 版本
-          cache: bun        # 启用 bun 包管理器缓存
+          node-version: 20
+
+      # 步骤 3：配置缓存
+      - name: Cache bun modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.bun
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
 
       # 步骤 3：配置 Pages 服务
       - name: Setup Pages
@@ -65,4 +73,4 @@ jobs:
       # 最终部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v3
