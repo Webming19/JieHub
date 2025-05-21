@@ -54,5 +54,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/deploy-pages@v2  # 最新稳定版部署 Action
+      - uses: actions/deploy-pages@v4  # 最新稳定版部署 Action
         id: deployment
