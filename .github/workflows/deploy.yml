@@ -17,8 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      BUILD_DIR: doc_build  # 环境变量统一管理路径[5](@ref)
 
     steps:
       - uses: actions/checkout@v4
@@ -37,14 +35,14 @@ jobs:
 
       - run: bun run build
         env:
-          NODE_ENV: production  # 显式声明构建环境[6](@ref)
+          NODE_ENV: production
 
       - name: Verify build output
-        run: ls -R ${{ env.BUILD_DIR }}  # 输出目录验证[2](@ref)
+        run: ls -R doc_build
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ env.BUILD_DIR }}
+          path: doc_build
 
   deploy:
     environment:
